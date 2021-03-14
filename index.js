@@ -3,6 +3,11 @@ const { spawn } = require("child_process");
 
 const rclone = require("rclone.js");
 
+const OPTIONS = {
+  "out": "-", // Outputs the NZB to `stdout` so others can pipe from it if needed.
+  "log-level": 1, // Only shows error.
+}
+
 /**
  * Get size of a file in bytes
  * @param {string} filePath The path to the file
@@ -25,7 +30,17 @@ async function getSize(filePath) {
 }
 
 module.exports = async function(filePath, options = {}) {
+  options = {
+    ...OPTIONS,
+    ...options,
+  };
+
+  // Nyuu requires file size beforehand in order to pipe data.
+  // We use `rclone lsf` to retrieve the file size.
   const fileSize = await getSize(filePath);
+  // Because the `filePath` can be both local file and remote file,
+  // `basename()` won't parse "remote:path/to/file" correctly. We
+  // simply at the leading forward splash to trick it.
   const fileName = basename(filePath.replace(":", ":/"));
 
   const args = ["nyuu"];
@@ -33,9 +48,10 @@ module.exports = async function(filePath, options = {}) {
   // Converts options to string params.
   Object.keys(options).forEach(key => {
     args.push(`--${key}`);
-    args.push(options[key]);
+    args.push(`${options[key]}`);
   });
 
+  // Toggles the SSL flag for secure ports.
   if ([563, 443].indexOf(parseInt(options.port)) > -1) {
     args.push("--ssl");
   }
@@ -48,6 +64,6 @@ module.exports = async function(filePath, options = {}) {
   });
 
   uploader.on("close", () => {
-    console.log("done");
+
   });
 }

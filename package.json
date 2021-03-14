@@ -1,0 +1,23 @@
+{
+  "name": "nugu",
+  "version": "0.1.0",
+  "description": "Node.js Usenet Generic Uploader",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/vietcode/nugu.git"
+  },
+  "author": "Sơn Trần-Nguyễn",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/vietcode/nugu/issues"
+  },
+  "homepage": "https://github.com/vietcode/nugu#readme",
+  "dependencies": {
+    "nyuu": "^0.4.0",
+    "rclone.js": "^0.4.2"
+  }
+}

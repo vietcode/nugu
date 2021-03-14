@@ -7,7 +7,7 @@ The uploader supports uploading from either local file or a file on a cloud prov
 ## Installation
 
 ```sh
-npm install rclone.js
+npm install vietcode/nugu
 ```
 
 ## Usage

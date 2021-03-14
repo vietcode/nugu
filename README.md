@@ -12,10 +12,18 @@ npm install vietcode/nugu
 
 ## Usage
 
+### CLI
+
+```shell
+npx nugu remote:path/to/linux.iso --host=localhost --port=119 > linux.iso.nzb
+```
+
+### Javascript
+
 ```js
 const nugu = require("nugu");
 
-nugu("remote:path/to/file.iso", {
+nugu("remote:path/to/linux.iso", {
   host: "localhost",
   port: 119,
   method: "POST",

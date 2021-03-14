@@ -1,8 +1,11 @@
 {
   "name": "nugu",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Node.js Usenet Generic Uploader",
   "main": "index.js",
+  "bin": {
+    "nugu": "./bin/nugu.js"
+  },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
@@ -17,6 +20,7 @@
   },
   "homepage": "https://github.com/vietcode/nugu#readme",
   "dependencies": {
+    "mri": "^1.1.6",
     "nyuu": "^0.4.0",
     "rclone.js": "^0.4.2"
   }

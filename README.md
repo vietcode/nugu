@@ -11,6 +11,16 @@ file/folder on a cloud provider through a Rclone remote.
 npm install vietcode/nugu
 ```
 
+See [Usage](#usage) below for how to call it.
+
+If you don't want to pass the common options all the time, create an
+`.env` file in your current directory. For each options needed, adds an
+variable prefixed with `USENET_POST_`, and the uppercased option name.
+Hyphen (`-`) needs to be replaced with underscore (`_`). For example:
+
+- `USENET_POST_PORT=443`: sets `port` option to 443.
+- `USENET_POST_ARTICLE_SIZE=1048576`: sets `article-size` option to 1MB.
+
 ## Usage
 
 ### CLI
@@ -32,7 +42,7 @@ nugu("remote:path/to/file-or-folder", {
   user: "",
   password: "",
   connections: 3,
-  articleSize: 716800, // Target size of each news post (default 700K)
+  "article-size": 716800, // Target size of each news post (default 700K)
   comment: "", // Comment to insert before post subject
   comment2: "", // Comment to append after post subject
   subject: `{comment} [{0filenum}/{files}] - "{filename}" yEnc ({part}/{parts}) {filesize} {comment2}`,

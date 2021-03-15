@@ -4,10 +4,22 @@ const { Readable } = require("stream");
 
 const rclone = require("rclone.js").promises;
 
+require("nvar")();
+
 const OPTIONS = {
   "out": "-", // Outputs the NZB to `stdout` so others can pipe from it if needed.
   "log-level": 1, // Only shows error.
 }
+
+// Maps environment variables to default options if any.
+Object.keys(process.env).forEach(key => {
+  if (key.indexOf("USENET_POST_") > -1) {
+    const value = process.env[key];
+    key = key.replace("USENET_POST_", "").toLowerCase().replace("_", "-");
+    console.log(`${key}=${value}`);
+    OPTIONS[key] = value;
+  }
+});
 
 /**
  * Get list of file stats from a path

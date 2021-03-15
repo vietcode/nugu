@@ -21,9 +21,17 @@ Object.keys(process.env).forEach(key => {
 });
 
 /**
+ * A file from a remote.
+ * @typedef {Object} File
+ * @property {!string} Path - The relative path of the file.
+ * @property {!string} Name - The file name.
+ * @property {!number} Size - The size of the file.
+ */
+
+/**
  * Get list of file stats from a path
  * @param {string} path The path to the file or folder.
- * @returns {JSON} The file list in JSON format.
+ * @returns {Promise<File[]>} The file list in JSON format.
  */
 async function lsjson(path) {
   const result = await rclone.lsjson(

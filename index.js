@@ -1,7 +1,8 @@
-const { basename } = require("path");
+const { join } = require("path");
 const { spawn } = require("child_process");
+const { Readable } = require("stream");
 
-const rclone = require("rclone.js");
+const rclone = require("rclone.js").promises;
 
 const OPTIONS = {
   "out": "-", // Outputs the NZB to `stdout` so others can pipe from it if needed.
@@ -9,39 +10,37 @@ const OPTIONS = {
 }
 
 /**
- * Get size of a file in bytes
- * @param {string} filePath The path to the file
- * @returns {Number} the file size in bytes.
+ * Get list of file stats from a path
+ * @param {string} path The path to the file or folder.
+ * @returns {JSON} The file list in JSON format.
  */
-async function getSize(filePath) {
-  return new Promise((resolve, reject) => {
-    const lsf = rclone.lsf(filePath, "--format", "s");
-    let stdout = "";
-    lsf.stdout.on("data", data => {
-      stdout += data;
-    });
-    lsf.stderr.on("data", (data) => {
-      reject(data.toString());
-    });
-    lsf.stdout.on("end", () => {
-      resolve(parseInt(stdout.trim()));
-    });
-  });
+async function lsjson(path) {
+  const result = await rclone.lsjson(
+    path,
+    "-R", "--files-only",
+    "--no-mimetype", "--no-modtime",
+  );
+  return JSON.parse(result);
 }
 
-module.exports = async function(filePath, options = {}) {
+module.exports = async function(sourcePath, options = {}) {
   options = {
     ...OPTIONS,
     ...options,
   };
 
-  // Nyuu requires file size beforehand in order to pipe data.
-  // We use `rclone lsf` to retrieve the file size.
-  const fileSize = await getSize(filePath);
-  // Because the `filePath` can be both local file and remote file,
-  // `basename()` won't parse "remote:path/to/file" correctly. We
-  // simply at the leading forward splash to trick it.
-  const fileName = basename(filePath.replace(":", ":/"));
+  const files = await lsjson(sourcePath);
+  // Converts the file list into a string, one file per line.
+  const filelist = files.map(({ Path, Name, Size }) => {
+    // Because `sourcePath` can be either of a folder or a file, we
+    // remove the actual relative path of this file from `sourcePath`
+    // to get the directory name.
+    const filePath = join(sourcePath.replace(Path, ""), Path);
+    return `procjson://"${ Name }",${ Size },"npx rclone cat ${ filePath }"`;
+  }).join("\n");
+
+  // Input file from stdin that we pipe our file list to.
+  options["input-file"] = "-";
 
   const args = ["nyuu"];
 
@@ -56,14 +55,17 @@ module.exports = async function(filePath, options = {}) {
     args.push("--ssl");
   }
 
-  // Input.
-  args.push(`procjson://"${fileName}",${fileSize},"npx rclone cat ${filePath}"`);
-
   const uploader = spawn("npx", args, {
-    stdio: "inherit",
+    stdio: [
+      "pipe", // We pipe our data to stdin.
+      "inherit", // Let stdout inherit from parent process.
+      "inherit", // Let stderr inherit from parent process.
+    ],
   });
 
   uploader.on("close", () => {
 
   });
+
+  Readable.from(filelist).pipe(uploader.stdin);
 }

@@ -2,7 +2,8 @@
 
 Node.js Usenet Generic Uploader.
 
-The uploader supports uploading from either local file or a file on a cloud provider through a Rclone remote.
+The uploader supports uploading from either a local file/folder or a
+file/folder on a cloud provider through a Rclone remote.
 
 ## Installation
 
@@ -16,6 +17,7 @@ npm install vietcode/nugu
 
 ```shell
 npx nugu remote:path/to/linux.iso --host=localhost --port=119 > linux.iso.nzb
+npx nugu remote:path/to/folder --host=localhost --port=119 > folder.nzb
 ```
 
 ### Javascript
@@ -23,7 +25,7 @@ npx nugu remote:path/to/linux.iso --host=localhost --port=119 > linux.iso.nzb
 ```js
 const nugu = require("nugu");
 
-nugu("remote:path/to/linux.iso", {
+nugu("remote:path/to/file-or-folder", {
   host: "localhost",
   port: 119,
   method: "POST",

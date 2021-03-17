@@ -35,7 +35,8 @@ npx nugu remote:path/to/folder --host=localhost --port=119 > folder.nzb
 ```js
 const nugu = require("nugu");
 
-nugu("remote:path/to/file-or-folder", {
+/** @type {Buffer} **/
+const nzb = await nugu("remote:path/to/file-or-folder", {
   host: "localhost",
   port: 119,
   method: "POST",
@@ -48,5 +49,7 @@ nugu("remote:path/to/file-or-folder", {
   subject: `{comment} [{0filenum}/{files}] - "{filename}" yEnc ({part}/{parts}) {filesize} {comment2}`,
   from: "", // Shortcut for `-H From=...`. Defaults to 'username <username@host>'.
   groups: "alt.binaries.test", // Shortcut for `-H Newsgroups=...`. Separate multiple groups with commas.
+  filename: ({Name, Path, Size, ID}) => Name, // Custom filename.
+  progress: console.log,
 });
 ```

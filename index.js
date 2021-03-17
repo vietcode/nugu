@@ -76,7 +76,7 @@ module.exports = async function(sourcePath, options = {}) {
     // remove the actual relative path of this file from `sourcePath`
     // to get the directory name.
     const filePath = join(sourcePath.replace(Path, ""), Path);
-    return `procjson://"${ Name }",${ Size },"npx rclone cat ${ filePath }"`;
+    return `procjson://"${ Name }",${ Size },"npx rclone cat '${ filePath }'"`;
   }).join("\n");
 
   // Input file from stdin that we pipe our file list to.

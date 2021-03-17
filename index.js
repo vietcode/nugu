@@ -6,9 +6,20 @@ const rclone = require("rclone.js").promises;
 
 require("nvar")();
 
+/**
+ * A file from a remote.
+ * @typedef {Object} File
+ * @property {!string} Path - The relative path of the file.
+ * @property {!string} Name - The file name.
+ * @property {!number} Size - The size of the file.
+ * @property {string} [ID] - The ID of this file object. Not defined for local file.
+ */
+
 const OPTIONS = {
   "out": "-", // Outputs the NZB to `stdout` so others can pipe from it if needed.
   "log-level": 1, // Only shows error.
+  /** @type {(File) => string} */
+  filename: ({ Name }) => Name,
 }
 
 // Maps environment variables to default options if any.
@@ -19,14 +30,6 @@ Object.keys(process.env).forEach(key => {
     OPTIONS[key] = value;
   }
 });
-
-/**
- * A file from a remote.
- * @typedef {Object} File
- * @property {!string} Path - The relative path of the file.
- * @property {!string} Name - The file name.
- * @property {!number} Size - The size of the file.
- */
 
 /**
  * Get list of file stats from a path
@@ -50,7 +53,10 @@ module.exports = async function(sourcePath, options = {}) {
 
   const files = await lsjson(sourcePath);
   // Converts the file list into a string, one file per line.
-  const filelist = files.map(({ Path, Name, Size }) => {
+  const filelist = files.map((file) => {
+    const { Path, Size } = file;
+    // Lets the `filename` option rename it if needed. Default to file's `Name`.
+    const Name = options.filename(file);
     // Because `sourcePath` can be either of a folder or a file, we
     // remove the actual relative path of this file from `sourcePath`
     // to get the directory name.

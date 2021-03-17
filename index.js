@@ -1,6 +1,7 @@
 const { join } = require("path");
 const { spawn } = require("child_process");
 const { Readable } = require("stream");
+const readline = require("readline");
 
 const rclone = require("rclone.js").promises;
 
@@ -16,8 +17,6 @@ require("nvar")();
  */
 
 const OPTIONS = {
-  "out": "-", // Outputs the NZB to `stdout` so others can pipe from it if needed.
-  "log-level": 1, // Only shows error.
   /** @type {(File) => string} */
   filename: ({ Name }) => Name,
 }
@@ -45,11 +44,27 @@ async function lsjson(path) {
   return JSON.parse(result);
 }
 
+/**
+ * Uploads a folder or file into a single NZB.
+ * @param {string} sourcePath Path to the source folder/file to upload
+ * @param {Object} options Upload options.
+ */
 module.exports = async function(sourcePath, options = {}) {
   options = {
     ...OPTIONS,
     ...options,
   };
+
+  // Saves the user-specified output option.
+  const output = options.out;
+  // But asks the uploader to always output to stdout.
+  options.out = "-";
+
+  const progress = options.progress;
+  // When the `progress` option is a function, we can't pass it to nyuu.
+  if (typeof options.progress === "function") {
+    delete options.progress;
+  }
 
   const files = await lsjson(sourcePath);
   // Converts the file list into a string, one file per line.
@@ -71,8 +86,12 @@ module.exports = async function(sourcePath, options = {}) {
 
   // Converts options to string params.
   Object.keys(options).forEach(key => {
-    args.push(`--${key}`);
-    args.push(`${options[key]}`);
+    args.push(`--${ key }`);
+    const value = options[key];
+
+    if (typeof value !== "boolean") {
+      args.push(`${ value }`);
+    }
   });
 
   // Toggles the SSL flag for secure ports.
@@ -80,17 +99,30 @@ module.exports = async function(sourcePath, options = {}) {
     args.push("--ssl");
   }
 
-  const uploader = spawn("npx", args, {
-    stdio: [
-      "pipe", // We pipe our data to stdin.
-      "inherit", // Let stdout inherit from parent process.
-      "inherit", // Let stderr inherit from parent process.
-    ],
-  });
+  const { stdin, stdout, stderr } = spawn("npx", args);
 
-  uploader.on("close", () => {
+  Readable.from(filelist).pipe(stdin);
 
-  });
+  if (output === "-") {
+    stdout.pipe(process.stdout);
+    stderr.pipe(process.stderr);
+  } else {
+    if (typeof progress === "function") {
+      const progressStream = readline.createInterface({
+        input: stderr,
+      });
 
-  Readable.from(filelist).pipe(uploader.stdin);
+      progressStream.on("line", progress);
+    }
+
+    return new Promise((resolve, reject) => {
+      const chunks = [];
+      stdout.on("data", (chunk) => {
+        chunks.push(chunk);
+      });
+      stdout.on("end", () => {
+        resolve(Buffer.concat(chunks));
+      });
+    });
+  }
 }

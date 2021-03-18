@@ -25,7 +25,7 @@ const OPTIONS = {
 Object.keys(process.env).forEach(key => {
   if (key.indexOf("USENET_POST_") > -1) {
     const value = process.env[key];
-    key = key.replace("USENET_POST_", "").toLowerCase().replace("_", "-");
+    key = key.replace("USENET_POST_", "").toLowerCase().replace(/_/g, "-");
     OPTIONS[key] = value;
   }
 });

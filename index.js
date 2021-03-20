@@ -7,6 +7,12 @@ const rclone = require("rclone.js").promises;
 
 require("nvar")();
 
+// The log from `nyuu` has lines for upload info.
+// For example: Uploading 4137 article(s) from 1 file(s) totalling 2827.49 MiB.
+const UPLOAD_INFO_REGEX = /Uploading (?<articles>[\d]+) article\(s\) from (?<files>[\d]+) file\(s\) totalling (?<totalSize>[\d.]+ (?:K|M|G)iB)/;
+// Log lines with progress data.
+const PROGRESS_REGEX = /Article posting progress: (?<read>[\d]+) read, (?<posted>[\d]+) posted(?:, (?<checked>[\d]+) checked)?/
+
 /**
  * A file from a remote.
  * @typedef {Object} File
@@ -63,7 +69,9 @@ module.exports = async function(sourcePath, options = {}) {
   const progress = options.progress;
   // When the `progress` option is a function, we can't pass it to nyuu.
   if (typeof options.progress === "function") {
-    delete options.progress;
+    // Then we set Nyuu to output progress to its log instead of stderr,
+    // since we can't handle ASCII escaping sequences there.
+    options.progress = "log:2s";
   }
 
   const files = await lsjson(sourcePath);
@@ -108,11 +116,37 @@ module.exports = async function(sourcePath, options = {}) {
     stderr.pipe(process.stderr);
   } else {
     if (typeof progress === "function") {
+      // By default, progress is output to stderr.
       const progressStream = readline.createInterface({
         input: stderr,
       });
 
-      progressStream.on("line", progress);
+      // Progress data.
+      const data = {
+        files: 0,
+        articles: 0,
+        totalSize: 0,
+        read: 0,
+        posted: 0,
+        checked: 0,
+      };
+
+      // Parses lines of Nyuu's logs for progress data.
+      progressStream.on("line", (line) => {
+        line = line.replace(/[\W+]\s/, "");
+
+        const uploadInfo = line.match(UPLOAD_INFO_REGEX);
+        if (uploadInfo) {
+          Object.assign(data, uploadInfo.groups);
+        } else {
+          const progressInfo = line.match(PROGRESS_REGEX);
+          if (progressInfo) {
+            Object.assign(data, progressInfo.groups);
+          }
+        }
+
+        progress(data);
+      });
     }
 
     return new Promise((resolve, reject) => {

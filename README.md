@@ -1,4 +1,4 @@
-# NUGU
+# NUGU [![Open in Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/vietcode/nugu/blob/main/Nugu.ipynb)
 
 Node.js Usenet Generic Uploader.
 

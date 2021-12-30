@@ -2,6 +2,7 @@ const { join } = require("path");
 const { spawn } = require("child_process");
 const { Readable } = require("stream");
 const readline = require("readline");
+const fs = require("fs");
 
 const rclone = require("rclone.js").promises;
 
@@ -63,7 +64,7 @@ module.exports = async function(sourcePath, options = {}) {
 
   // Saves the user-specified output option.
   const output = options.out;
-  // But asks the uploader to always output to stdout.
+  // But asks the uploader to always output to stdout so we can intercept.
   options.out = "-";
 
   const progress = options.progress;
@@ -107,13 +108,23 @@ module.exports = async function(sourcePath, options = {}) {
     args.push("--ssl");
   }
 
-  const { stdin, stdout, stderr } = spawn("npx", args);
+  const subprocess = spawn("npx", args, {
+    // We needs to pipe `stdin`, but only pipe `stdout` when the user requests
+    // it. `stderr` is always sent to the real TTY.
+    stdio: ["pipe", output === "-" ? "inherit" : "pipe", "inherit"],
+  });
 
+  const { stdin, stdout, stderr } = subprocess;
+  // Sends input to the subprocess.
   Readable.from(filelist).pipe(stdin);
 
   if (output === "-") {
-    stdout.pipe(process.stdout);
-    stderr.pipe(process.stderr);
+    // Does nothing, as the output is already sent to process' `stdout`.
+    return subprocess;
+  } else if (output) {
+    // Sends output to the file stream.
+    stdout.pipe(fs.createWriteStream(output));
+    return subprocess;
   } else {
     if (typeof progress === "function") {
       // By default, progress is output to stderr.

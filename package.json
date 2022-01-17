@@ -2,7 +2,11 @@
   "name": "nugu",
   "version": "0.7.3",
   "description": "Node.js Usenet Generic Uploader",
-  "main": "index.js",
+  "files": [
+    "bin/",
+    "lib/"
+  ],
+  "main": "./lib/nugu.js",
   "bin": {
     "nugu": "./bin/nugu.js"
   },
@@ -23,6 +27,8 @@
     "mri": "^1.1.6",
     "nvar": "^1.3.1",
     "nyuu": "^0.4.0",
-    "rclone.js": "^0.5.0"
+    "rclone-archive": "^0.1.0",
+    "rclone.js": "^0.6.0",
+    "yazl": "^2.5.1"
   }
 }

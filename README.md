@@ -26,8 +26,12 @@ Hyphen (`-`) needs to be replaced with underscore (`_`). For example:
 ### CLI
 
 ```shell
+# Uploads a single file and saves the NZB to file.
 npx nugu remote:path/to/linux.iso --host=localhost --port=119 > linux.iso.nzb
+# Uploads a folder and saves the NZB to file.
 npx nugu remote:path/to/folder --host=localhost --port=119 > folder.nzb
+# Adds all file in a folder into a zip file with custom name before uploading.
+npx nugu --archive --filename folder.zip remote:path/to/folder > folder.zip.nzb
 ```
 
 ### Javascript

@@ -5,6 +5,12 @@ Node.js Usenet Generic Uploader.
 The uploader supports uploading from either a local file/folder or a
 file/folder on a cloud provider through a Rclone remote.
 
+By default, uploaded articles are checked using 1 connection. Adjust
+the `--check-connections` flag to 0 to disable, or 2 or higher to set
+the number of connections used for post checking. Higher numbers of
+connections are only useful if post checking is bottlenecking the rest
+of the process.
+
 ## Installation
 
 ```sh
